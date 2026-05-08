@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concrete ROI Simulator — Independent Educational Tool</title>
+    <meta name="description" content="Estimate your returns from Concrete XYZ vaults. Compare Bear, Average and Bull scenarios. Free educational tool — not affiliated with Concrete or Blueprint Finance.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --primary-yellow: #F5E97A;
+            --primary-black: #1A1A1A;
+            --light-bg: #FEFCE8;
+            --yellow-hover: #E8DC60;
+            --white: #FFFFFF;
+            --muted-gray: #6B7280;
+            --border: #E5E7EB;
+            --card-bg: #FFFFFF;
+            --font-inter: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-inter);
+            background-color: var(--light-bg);
+            color: var(--primary-black);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Disclaimer Banner */
+        .disclaimer-banner {
+            background-color: var(--primary-yellow);
+            color: var(--primary-black);
+            padding: 10px 20px;
+            font-size: 13px;
+            text-align: center;
+            position: relative;
+            font-weight: 500;
+            z-index: 100;
+        }
+
+        .disclaimer-banner .close-btn {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background-color: var(--primary-black);
+            color: var(--white);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-mark {
+            background-color: var(--primary-yellow);
+            color: var(--primary-black);
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 20px;
+            border-radius: 4px;
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .logo-subtext {
+            font-size: 10px;
+            color: var(--muted-gray);
+            margin-top: 2px;
+        }
+
+        .pill-badge {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #D1D5DB;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Simulator Card */
+        .simulator-card {
+            background-color: var(--white);
+            max-width: 680px;
+            width: 100%;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+        }
+
+        .step {
+            margin-bottom: 32px;
+        }
+
+        .step-label {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--primary-black);
+            margin-bottom: 12px;
+        }
+
+        /* Input Styles */
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .number-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            transition: border-color 0.2s ease;
+            outline: none;
+        }
+
+        .number-input:focus {
+            border-color: var(--primary-yellow);
+        }
+
+        .currency-select {
+            padding: 12px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            background: var(--white);
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .min-deposit-note {
+            font-size: 12px;
+            color: var(--muted-gray);
+            margin-top: 8px;
+        }
+
+        /* Vault Cards */
+        .vault-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+        }
+
+        .vault-card {
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .vault-card:hover {
+            border-color: var(--primary-yellow);
+        }
+
+        .vault-card.selected {
+            border-color: var(--primary-yellow);
+            background-color: rgba(245, 233, 122, 0.05);
+        }
+
+        .vault-badge {
+            background-color: var(--primary-black);
+            color: var(--primary-yellow);
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            width: fit-content;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .vault-title {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .vault-apr {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 4px 0;
+        }
+
+        .vault-apr span {
+            font-size: 12px;
+            color: var(--muted-gray);
+            font-weight: 500;
+        }
+
+        .vault-info {
+            font-size: 12px;
+            color: var(--muted-gray);
+        }
+
+        /* Slider Styles */
+        .slider-container {
+            margin-top: 10px;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: var(--border);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--primary-yellow);
+            border: 2px solid var(--primary-black);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .period-display {
+            font-weight: 700;
+            font-size: 16px;
+            margin-top: 12px;
+            display: block;
+        }
+
+        .quick-select {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .quick-btn {
+            background: var(--white);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-btn:hover {
+            border-color: var(--primary-yellow);
+        }
+
+        /* Toggle Buttons */
+        .toggle-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            background: var(--white);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn.selected {
+            border-color: var(--primary-yellow);
+            background-color: rgba(245, 233, 122, 0.05);
+        }
+
+        .scenario-note {
+            font-size: 12px;
+            color: var(--muted-gray);
+            margin-top: 12px;
+        }
+
+        /* Calculate Button */
+        .calculate-btn {
+            width: 100%;
+            background-color: var(--primary-yellow);
+            color: var(--primary-black);
+            border: none;
+            height: 56px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .calculate-btn:hover {
+            background-color: var(--yellow-hover);
+        }
+
+        .calculate-btn:disabled {
+            background-color: var(--border);
+            cursor: not-allowed;
+            color: var(--muted-gray);
+        }
+
+        /* Results Section */
+        #results-section {
+            display: none;
+            width: 100%;
+            margin-top: 60px;
+            max-width: 1000px;
+            animation: fadeIn 0.6s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .result-card {
+            background-color: var(--primary-black);
+            color: var(--white);
+            padding: 24px;
+            border-radius: 12px;
+            border-top: 4px solid var(--primary-yellow);
+        }
+
+        .result-label {
+            font-size: 12px;
+            color: var(--muted-gray);
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .result-value {
+            font-size: 24px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+        }
+
+        .result-value.highlight {
+            color: var(--primary-yellow);
+        }
+
+        .result-sub {
+            font-size: 11px;
+            color: var(--muted-gray);
+            margin-top: 8px;
+        }
+
+        /* Chart Section */
+        .chart-container {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            margin-bottom: 40px;
+        }
+
+        .chart-title {
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 24px;
+        }
+
+        /* Table Section */
+        .table-container {
+            background: var(--white);
+            padding: 0;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            margin-bottom: 40px;
+        }
+
+        .breakdown-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .breakdown-table th {
+            background: #F9FAFB;
+            padding: 16px;
+            font-weight: 600;
+            color: var(--muted-gray);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .breakdown-table td {
+            padding: 16px;
+            border-bottom: 1px solid #F3F4F6;
+        }
+
+        .breakdown-table tr.final-row {
+            background-color: rgba(245, 233, 122, 0.2);
+            font-weight: 700;
+        }
+
+        /* Scenario Comparison */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .comp-card {
+            background: var(--white);
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .comp-card.active {
+            border-color: var(--primary-yellow);
+            background-color: rgba(245, 233, 122, 0.05);
+        }
+
+        .comp-title {
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .comp-stat {
+            margin-bottom: 12px;
+        }
+
+        .comp-label {
+            font-size: 12px;
+            color: var(--muted-gray);
+        }
+
+        .comp-value {
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        /* Share Section */
+        .share-section {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-bottom: 60px;
+        }
+
+        .share-btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary-yellow);
+            border: none;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid var(--border);
+        }
+
+        /* Bottom Disclaimer */
+        .bottom-disclaimer {
+            background: #F3F4F6;
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--muted-gray);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .disclaimer-text {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--primary-black);
+            color: var(--white);
+            padding: 40px 24px;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 24px;
+        }
+
+        .footer-links a {
+            color: var(--white);
+            text-decoration: none;
+            margin: 0 12px;
+            font-size: 14px;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 12px;
+            color: var(--muted-gray);
+        }
+
+        /* Mobile & Tablet Responsiveness */
+        @media (max-width: 1024px) {
+            .results-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .vault-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .top-bar {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+            .logo-row {
+                justify-content: center;
+            }
+            .container {
+                margin: 20px auto;
+                padding: 0 16px;
+            }
+            .simulator-card {
+                padding: 24px;
+            }
+            .vault-grid {
+                grid-template-columns: 1fr;
+            }
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+            .footer-content {
+                flex-direction: column;
+                gap: 24px;
+                text-align: center;
+            }
+            .footer-links {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+            .share-section {
+                flex-direction: column;
+            }
+            .share-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            .toggle-group {
+                flex-wrap: wrap;
+            }
+            .toggle-btn {
+                min-width: calc(50% - 6px);
+            }
+            .toggle-btn:last-child {
+                min-width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            .logo-text {
+                font-size: 16px;
+            }
+            .result-value {
+                font-size: 20px;
+            }
+            .vault-apr {
+                font-size: 20px;
+            }
+            .toggle-btn {
+                min-width: 100%;
+            }
+            .quick-select {
+                flex-wrap: wrap;
+            }
+            .quick-btn {
+                flex: 1 1 30%;
+                text-align: center;
+            }
+        }
+
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+        }
+
+        /* Custom scrollbar for better look on desktop */
+        .table-container::-webkit-scrollbar {
+            height: 6px;
+        }
+        .table-container::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        /* Print styles */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #results-section, #results-section * {
+                visibility: visible;
+            }
+            #results-section {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100% !important;
+                display: block !important;
+            }
+            .share-section, .close-btn, .calculate-btn {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="banner" class="disclaimer-banner">
+        This is an independent educational tool. Not affiliated with Concrete or Blueprint Finance. Yield rates are estimates only — not guaranteed. Official site: concrete.xyz
+        <button class="close-btn" onclick="document.getElementById('banner').style.display='none'">×</button>
+    </div>
+
+    <header class="top-bar">
+        <div class="logo-container">
+            <div class="logo-row">
+                <div class="logo-mark">C</div>
+                <div class="logo-text">Concrete ROI Simulator</div>
+            </div>
+            <div class="logo-subtext">Built for educational purposes only</div>
+        </div>
+        <div class="pill-badge">Independent tool — not affiliated with Concrete</div>
+    </header>
+
+    <main class="container">
+        <div class="simulator-card">
+            <!-- Step 1 -->
+            <div class="step">
+                <label class="step-label">How much do you want to deposit?</label>
+                <div class="input-group">
+                    <input type="number" id="deposit-amount" class="number-input" value="1000" min="100" placeholder="0.00">
+                    <select id="currency-select" class="currency-select">
+                        <option value="USDT">USDT</option>
+                        <option value="ETH">ETH</option>
+                        <option value="WBTC">WBTC</option>
+                    </select>
+                </div>
+                <div id="min-warning" class="min-deposit-note">Minimum deposit: 100 USDT</div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="step">
+                <label class="step-label">Choose your vault</label>
+                <div class="vault-grid">
+                    <div class="vault-card selected" onclick="selectVault('defi')" data-vault="defi">
+                        <span class="vault-badge">Most popular</span>
+                        <div class="vault-title">USDT DeFi Vault</div>
+                        <div class="vault-apr">8.50% <span>Base APR</span></div>
+                        <div class="vault-info">Fee: 1.5%/yr</div>
+                        <div class="vault-info">Net: ~7.0%</div>
+                        <div class="vault-info">Withdraw: 7-day queue</div>
+                    </div>
+                    <div class="vault-card" onclick="selectVault('lending')" data-vault="lending">
+                        <span class="vault-badge">Lowest risk</span>
+                        <div class="vault-title">Vanilla Lending</div>
+                        <div class="vault-apr">2.50% <span>Base APR</span></div>
+                        <div class="vault-info">Fee: 1.5%/yr</div>
+                        <div class="vault-info">Net: ~1.0%</div>
+                        <div class="vault-info">Withdraw: Instant</div>
+                    </div>
+                    <div class="vault-card" onclick="selectVault('insto')" data-vault="insto">
+                        <span class="vault-badge">Reduced fee</span>
+                        <div class="vault-title">Institutional Vault</div>
+                        <div class="vault-apr">6.00% <span>Base APR</span></div>
+                        <div class="vault-info">Fee: 1.25%/yr</div>
+                        <div class="vault-info">Net: ~4.75%</div>
+                        <div class="vault-info">Withdraw: Varies</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="step">
+                <label class="step-label">How long will you keep funds deposited?</label>
+                <div class="slider-container">
+                    <input type="range" id="period-slider" class="slider" min="1" max="36" value="12">
+                    <span id="period-display" class="period-display">12 months (1.0 years)</span>
+                </div>
+                <div class="quick-select">
+                    <button class="quick-btn" onclick="setPeriod(1)">1M</button>
+                    <button class="quick-btn" onclick="setPeriod(3)">3M</button>
+                    <button class="quick-btn" onclick="setPeriod(6)">6M</button>
+                    <button class="quick-btn" onclick="setPeriod(12)">1Y</button>
+                    <button class="quick-btn" onclick="setPeriod(24)">2Y</button>
+                    <button class="quick-btn" onclick="setPeriod(36)">3Y</button>
+                </div>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="step">
+                <label class="step-label">Choose your scenario</label>
+                <div class="toggle-group">
+                    <button class="toggle-btn" onclick="selectScenario('bear')" data-scenario="bear">🐻 Bear</button>
+                    <button class="toggle-btn selected" onclick="selectScenario('avg')" data-scenario="avg">📊 Average</button>
+                    <button class="toggle-btn" onclick="selectScenario('bull')" data-scenario="bull">🚀 Bull</button>
+                </div>
+                <div class="scenario-note">APR rates are variable. Scenarios are estimates for educational purposes only.</div>
+            </div>
+
+            <button id="calculate-btn" class="calculate-btn" onclick="calculate()">Calculate my returns →</button>
+        </div>
+
+        <!-- Results Section -->
+        <section id="results-section">
+            <div class="results-grid">
+                <div class="result-card">
+                    <div class="result-label">Gross yield</div>
+                    <div id="res-gross" class="result-value">$0.00</div>
+                    <div id="res-gross-perc" class="result-sub">Before fees (0.00%)</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Total fees paid</div>
+                    <div id="res-fees" class="result-value">$0.00</div>
+                    <div class="result-sub">Annual management fee</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Net yield</div>
+                    <div id="res-net" class="result-value highlight">$0.00</div>
+                    <div class="result-sub">What you actually receive</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Final balance</div>
+                    <div id="res-balance" class="result-value">$0.00</div>
+                    <div class="result-sub">Estimated total at withdrawal</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">Balance over time</div>
+                <canvas id="yieldChart"></canvas>
+            </div>
+
+            <div class="table-container">
+                <table class="breakdown-table">
+                    <thead>
+                        <tr>
+                            <th>Period</th>
+                            <th>Deposit</th>
+                            <th>Gross Yield</th>
+                            <th>Fee Deducted</th>
+                            <th>Net Yield</th>
+                            <th>Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="breakdown-body">
+                        <!-- Rows injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="comparison-grid">
+                <div id="comp-bear" class="comp-card">
+                    <div class="comp-title">🐻 Bear Scenario</div>
+                    <div class="comp-stat">
+                        <div class="comp-label">Net yield</div>
+                        <div id="comp-bear-yield" class="comp-value">$0.00</div>
+                    </div>
+                    <div class="comp-stat">
+                        <div class="comp-label">Final balance</div>
+                        <div id="comp-bear-bal" class="comp-value">$0.00</div>
+                    </div>
+                </div>
+                <div id="comp-avg" class="comp-card">
+                    <div class="comp-title">📊 Average Scenario</div>
+                    <div class="comp-stat">
+                        <div class="comp-label">Net yield</div>
+                        <div id="comp-avg-yield" class="comp-value">$0.00</div>
+                    </div>
+                    <div class="comp-stat">
+                        <div class="comp-label">Final balance</div>
+                        <div id="comp-avg-bal" class="comp-value">$0.00</div>
+                    </div>
+                </div>
+                <div id="comp-bull" class="comp-card">
+                    <div class="comp-title">🚀 Bull Scenario</div>
+                    <div class="comp-stat">
+                        <div class="comp-label">Net yield</div>
+                        <div id="comp-bull-yield" class="comp-value">$0.00</div>
+                    </div>
+                    <div class="comp-stat">
+                        <div class="comp-label">Final balance</div>
+                        <div id="comp-bull-bal" class="comp-value">$0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="share-section">
+                <button id="share-btn" class="share-btn btn-primary" onclick="shareResults()">
+                    <i data-lucide="share-2" size="18"></i>
+                    <span>Share my results</span>
+                </button>
+                <button class="share-btn btn-outline" onclick="window.print()">
+                    <i data-lucide="download" size="18"></i>
+                    Download as PDF
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <section class="bottom-disclaimer">
+        <div class="disclaimer-text">
+            All calculations are estimates based on current approximate APR rates and are for educational purposes only. Actual returns will vary. Yield rates change with market conditions. This tool does not constitute financial advice. Always verify current rates at concrete.xyz before depositing. DeFi protocols carry significant risks including total loss of funds.
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div style="font-weight: 700;">Concrete ROI Simulator</div>
+            <div class="footer-links">
+                <a href="https://concrete.xyz" target="_blank">concrete.xyz</a>
+                <a href="#">Concrete Lens</a>
+                <span style="color: var(--muted-gray); font-size: 14px;">Independent educational tool</span>
+            </div>
+            <div style="font-size: 14px; color: var(--muted-gray);">Not affiliated with Blueprint Finance or Concrete</div>
+        </div>
+        <div class="footer-bottom">
+            © 2026 · Built for the community · Not financial advice
+        </div>
+    </footer>
+
+    <script>
+        // Lucide Icons
+        lucide.createIcons();
+
+        // Constants
+        const VAULTS = {
+            defi: { name: 'USDT DeFi Vault', baseAPR: 0.085, annualFee: 0.015 },
+            lending: { name: 'Vanilla Lending Vault', baseAPR: 0.025, annualFee: 0.015 },
+            insto: { name: 'Institutional Vault', baseAPR: 0.060, annualFee: 0.0125 }
+        };
+
+        const SCENARIOS = {
+            bear: 0.70,
+            avg: 1.0,
+            bull: 1.20
+        };
+
+        // State
+        let selectedVaultKey = 'defi';
+        let selectedScenarioKey = 'avg';
+        let chart = null;
+
+        // UI Elements
+        const depositInput = document.getElementById('deposit-amount');
+        const periodSlider = document.getElementById('period-slider');
+        const periodDisplay = document.getElementById('period-display');
+        const calculateBtn = document.getElementById('calculate-btn');
+        const currencySelect = document.getElementById('currency-select');
+        const minWarning = document.getElementById('min-warning');
+
+        // Event Listeners
+        periodSlider.addEventListener('input', (e) => {
+            updatePeriodDisplay(e.target.value);
+            checkInputs();
+        });
+
+        depositInput.addEventListener('input', () => {
+            checkInputs();
+        });
+
+        function checkInputs() {
+            const deposit = parseFloat(depositInput.value) || 0;
+            const period = parseInt(periodSlider.value) || 0;
+            
+            if (deposit < 100) {
+                minWarning.style.color = '#EF4444';
+            } else {
+                minWarning.style.color = '#6B7280';
+            }
+
+            calculateBtn.disabled = period <= 0 || deposit <= 0;
+        }
+
+        function updatePeriodDisplay(val) {
+            const years = (val / 12).toFixed(1);
+            periodDisplay.innerText = `${val} months (${years} years)`;
+        }
+
+        function setPeriod(val) {
+            periodSlider.value = val;
+            updatePeriodDisplay(val);
+            checkInputs();
+        }
+
+        function selectVault(key) {
+            selectedVaultKey = key;
+            document.querySelectorAll('.vault-card').forEach(card => {
+                card.classList.remove('selected');
+                if (card.dataset.vault === key) card.classList.add('selected');
+            });
+        }
+
+        function selectScenario(key) {
+            selectedScenarioKey = key;
+            document.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                if (btn.dataset.scenario === key) btn.classList.add('selected');
+            });
+        }
+
+        function formatCurrency(val) {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+        }
+
+        function animateValue(obj, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const current = progress * (end - start) + start;
+                obj.innerHTML = formatCurrency(current);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        function calculateResults(deposit, vault, scenarioKey, months) {
+            const grossAPR = vault.baseAPR * SCENARIOS[scenarioKey];
+            const feeRate = vault.annualFee;
+            const netAPR = grossAPR - feeRate;
+            
+            let balance = deposit;
+            const breakdown = [];
+
+            for (let month = 1; month <= months; month++) {
+                const grossYieldThisMonth = balance * (grossAPR / 12);
+                const feeThisMonth = balance * (feeRate / 12);
+                const netYieldThisMonth = grossYieldThisMonth - feeThisMonth;
+                balance = balance + netYieldThisMonth
+                breakdown.push({
+                    month,
+                    grossYield: grossYieldThisMonth,
+                    fee: feeThisMonth,
+                    netYield: netYieldThisMonth,
+                    balance
+                });
+            }
+
+            const totalGrossYield = breakdown.reduce((sum, m) => sum + m.grossYield, 0);
+            const totalFees = breakdown.reduce((sum, m) => sum + m.fee, 0);
+            const totalNetYield = breakdown.reduce((sum, m) => sum + m.netYield, 0);
+            const finalBalance = deposit + totalNetYield;
+
+            return {
+                totalGrossYield,
+                totalFees,
+                totalNetYield,
+                finalBalance,
+                breakdown,
+                netAPR: netAPR * 100
+            };
+        }
+
+        function calculate() {
+            const deposit = parseFloat(depositInput.value);
+            const months = parseInt(periodSlider.value);
+            const vault = VAULTS[selectedVaultKey];
+            
+            const results = calculateResults(deposit, vault, selectedScenarioKey, months);
+
+            // Show results section
+            const section = document.getElementById('results-section');
+            section.style.display = 'block';
+            section.scrollIntoView({ behavior: 'smooth' });
+
+            // Animate Summary Values
+            animateValue(document.getElementById('res-gross'), 0, results.totalGrossYield, 1000);
+            animateValue(document.getElementById('res-fees'), 0, results.totalFees, 1000);
+            animateValue(document.getElementById('res-net'), 0, results.totalNetYield, 1000);
+            animateValue(document.getElementById('res-balance'), 0, results.finalBalance, 1000);
+
+            document.getElementById('res-gross-perc').innerText = `Before fees (${(vault.baseAPR * SCENARIOS[selectedScenarioKey] * 100).toFixed(2)}%)`;
+
+            // Table Breakdown
+            const tbody = document.getElementById('breakdown-body');
+            tbody.innerHTML = '';
+            results.breakdown.forEach((m, idx) => {
+                const row = document.createElement('tr');
+                if (idx === results.breakdown.length - 1) row.className = 'final-row';
+                row.innerHTML = `
+                    <td>Month ${m.month}</td>
+                    <td>${formatCurrency(deposit)}</td>
+                    <td>${formatCurrency(m.grossYield)}</td>
+                    <td>${formatCurrency(m.fee)}</td>
+                    <td>${formatCurrency(m.netYield)}</td>
+                    <td>${formatCurrency(m.balance)}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Sc scenarios side-by-side
+            ['bear', 'avg', 'bull'].forEach(s => {
+                const res = calculateResults(deposit, vault, s, months);
+                document.getElementById(`comp-${s}-yield`).innerText = formatCurrency(res.totalNetYield);
+                document.getElementById(`comp-${s}-bal`).innerText = formatCurrency(res.finalBalance);
+                
+                const card = document.getElementById(`comp-${s}`);
+                card.classList.remove('active');
+                if (s === selectedScenarioKey) card.classList.add('active');
+            });
+
+            // Chart
+            updateChart(results, deposit, months);
+        }
+
+        function updateChart(results, deposit, months) {
+            const ctx = document.getElementById('yieldChart').getContext('2d');
+            
+            if (chart) chart.destroy();
+
+            const labels = ['Start', ...results.breakdown.map(m => `M${m.month}`)];
+            const netData = [deposit, ...results.breakdown.map(m => m.balance)];
+            const heldData = Array(months + 1).fill(deposit);
+            
+            // Calculate gross balance for chart
+            let grossBal = deposit;
+            const grossData = [deposit];
+            const vault = VAULTS[selectedVaultKey];
+            const grossAPR = vault.baseAPR * SCENARIOS[selectedScenarioKey];
+            for (let i = 1; i <= months; i++) {
+                grossBal += grossBal * (grossAPR / 12);
+                grossData.push(grossBal);
+            }
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Projected Balance (Net)',
+                            data: netData,
+                            borderColor: '#F5E97A',
+                            backgroundColor: 'rgba(245, 233, 122, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3
+                        },
+                        {
+                            label: 'Gross Balance (Before Fees)',
+                            data: grossData,
+                            borderColor: 'rgba(245, 233, 122, 0.3)',
+                            borderDash: [5, 5],
+                            tension: 0.4,
+                            fill: false
+                        },
+                        {
+                            label: 'Held (No Yield)',
+                            data: heldData,
+                            borderColor: '#6B7280',
+                            borderDash: [2, 2],
+                            tension: 0,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: { color: 'rgba(0,0,0,0.05)' },
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function shareResults() {
+            const deposit = formatCurrency(depositInput.value);
+            const vault = VAULTS[selectedVaultKey].name;
+            const months = periodSlider.value;
+            const netYield = document.getElementById('res-net').innerText;
+            const totalBalance = document.getElementById('res-balance').innerText;
+            
+            const text = `I simulated depositing ${deposit} into the Concrete ${vault} for ${months} months. Estimated net return: ${netYield}. Calculated with Concrete ROI Simulator — https://concrete.xyz`;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('share-btn');
+                const original = btn.innerHTML;
+                btn.innerHTML = '<span>Copied!</span>';
+                btn.style.backgroundColor = '#10B981';
+                btn.style.color = '#FFFFFF';
+                setTimeout(() => {
+                    btn.innerHTML = original;
+                    btn.style.backgroundColor = '';
+                    btn.style.color = '';
+                    lucide.createIcons();
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
